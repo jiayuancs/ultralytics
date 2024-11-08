@@ -1,0 +1,104 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLO11 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+## 修改
+# - nc: 80 --> 10
+# - scales:
+#     - n: [0.50, 0.25, 1024] --> [0.50, 0.25, 512]
+# - backbone & head:
+#     - C3k2: 所有 C3K2 模块的隐层维度系数 e 都被改为 0.25
+#
+#
+## 性能
+### 数据集: dataset/ChinaMobile9000.yaml
+### 参数: epochs=300 imgsz=640 batch=32
+#### 验证集性能:
+# Ultralytics 8.3.28 __ Python-3.10.14 torch-2.2.2+cu118 CUDA:0 (NVIDIA GeForce RTX 3090, 24260MiB)
+# YOLO11n-v0.0.2 summary (fused): 238 layers, 1,196,174 parameters, 0 gradients, 4.6 GFLOPs
+#                  Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|__________| 15/15 [00:07<00:00,  2.14it/s]
+#                    all        923      10683      0.935      0.929      0.945      0.778
+#                    box        218        220      0.996      0.986      0.989      0.965
+#           box painting        210        210      0.953      0.981      0.964      0.818
+#              box label        206        212      0.968      0.939      0.962      0.851
+#                    POS        472        485      0.949      0.953      0.969      0.875
+#              POS label        485        498      0.953      0.966      0.954      0.908
+#               POS port        478       4296      0.975      0.993      0.986      0.811
+#               dust cap        334       1938      0.897      0.802      0.897      0.494
+#             tail fiber        486       1989      0.925      0.933      0.946      0.578
+#       tail fiber label        299        539      0.735      0.738      0.788       0.52
+#                optical        295        296          1      0.996      0.995      0.963
+
+
+# Parameters
+nc: 10 # 输出的类别数
+scales: # model compound scaling constants, i.e. 'model=yolo11n.yaml' will call yolo11.yaml with scale 'n'
+  # [depth, width, max_channels]
+  # depth 是网络的深度系数, 与下面定义的 repeats 相乘从而得到模型实际的层数
+  # width 是网络的宽度, 即通道数, 与下面的定义的每层模型的通道数相乘, 得到模型实际的通道数
+  # max_channels 是最大通道数, 是对 width 上限的限制
+  n: [0.50, 0.25, 512] # summary: 319 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
+  s: [0.50, 0.50, 1024] # summary: 319 layers, 9458752 parameters, 9458736 gradients, 21.7 GFLOPs
+  m: [0.50, 1.00, 512] # summary: 409 layers, 20114688 parameters, 20114672 gradients, 68.5 GFLOPs
+  l: [1.00, 1.00, 512] # summary: 631 layers, 25372160 parameters, 25372144 gradients, 87.6 GFLOPs
+  x: [1.00, 1.50, 512] # summary: 631 layers, 56966176 parameters, 56966160 gradients, 196.0 GFLOPs
+
+# YOLO11n backbone
+backbone:
+  # [from, repeats, module, args]
+  # - from 表示输入来自哪一层, 下面的每一行参数表示一层(层的编号从 0 开始)
+  #   负数是相对位置编号, 例如 -1 就表示上一层;
+  #   正数表示绝对位置编号, 例如 6 就表示第 6 层(从 0 开始编号)
+  # - repeats 表示该层的重复次数, 即深度, 该值最终会乘以 scales 中定义的 width, 作为实际模型的层数(最小为1)
+  # - module 表示该层的具体实现, 即类的名称
+  # - args 表示传入类构造函数的参数, 注意, args 中的参数与类构造函数中的参数并不是一一对应的关系, 
+  #   parse_model 方法中针对不同的类进行了不同的映射
+  # Conv 的参数 [ch_out, kernel, stride]
+  - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 1-P2/4
+  # C3k2 的参数 [c2, c3k, e]
+  # - c2 是输出的通道数
+  # - c3k 表示是否使用 c3k 模块, False 表示使用 Bottleneck 模块
+  # - e 是隐层通道数比例(隐层通道数等于 int(c2 * e) * 2)
+  - [-1, 2, C3k2, [256, False, 0.25]]
+  - [-1, 1, Conv, [256, 3, 2]] # 3-P3/8
+  - [-1, 2, C3k2, [512, False, 0.25]]
+  - [-1, 1, Conv, [512, 3, 2]] # 5-P4/16
+  - [-1, 2, C3k2, [512, True, 0.25]]
+  - [-1, 1, Conv, [1024, 3, 2]] # 7-P5/32
+  - [-1, 2, C3k2, [1024, True, 0.25]]
+  # SPPF 的参数 [c2, k]
+  # - c2 是输出通道数
+  # - k 是 nn.MaxPool2d 的 kernel_size
+  - [-1, 1, SPPF, [1024, 5]] # 9
+  # C2PSA 的参数 [c2, e=0.5]
+  # - c2 是输出通道数
+  # - e 是隐层通道数比例(隐层通道数等于 int(c2 * e) * 2)
+  - [-1, 2, C2PSA, [1024]] # 10
+
+# YOLO11n head
+head:
+  # nn.Upsample 的参数 [size, scale_factor, mode]
+  # - size 输出的大小, 可为 None(由scale_factor确定)
+  # - scale_factor 放大的倍数, 宽高均变为原来的 scale_factor 倍
+  # - mode 上采样算法
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  # Concat 的参数 [dimension]
+  # - dimension 表示在指定的维度进行拼接, 其实就是torch.cat(x, dim=dimension)
+  - [[-1, 6], 1, Concat, [1]] # cat backbone P4
+  - [-1, 2, C3k2, [512, False, 0.25]] # 13
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 4], 1, Concat, [1]] # cat backbone P3
+  - [-1, 2, C3k2, [256, False, 0.25]] # 16 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 13], 1, Concat, [1]] # cat head P4
+  - [-1, 2, C3k2, [512, False, 0.25]] # 19 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 10], 1, Concat, [1]] # cat head P5
+  - [-1, 2, C3k2, [1024, True, 0.25]] # 22 (P5/32-large)
+
+  # Detect 的参数 [nc]
+  # - nc 表示目标的类别数量
+  - [[16, 19, 22], 1, Detect, [nc]] # Detect(P3, P4, P5)
