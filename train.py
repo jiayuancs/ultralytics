@@ -1,3 +1,8 @@
+"""
+该文件用于debug
+训练YOLO模型建议使用命令行工具
+"""
+
 import os
 import argparse
 
@@ -7,7 +12,7 @@ from ultralytics import YOLO
 def get_opt():
     parser = argparse.ArgumentParser()
     parser.add_argument('--data', default='ChinaMobile9000.yaml', type=str, help="数据集")
-    parser.add_argument('--cfg', default='yolo11n-tiny.yaml', type=str, help="模型结构")
+    parser.add_argument('--cfg', default='ultralytics/cfg/models/mobile/yolo11n-tiny-mini-v2.yaml', type=str, help="模型结构")
     parser.add_argument('--epochs', default=300, type=int)
     parser.add_argument('--imgsz', default=640, type=int)
     parser.add_argument('--batch', default=32, type=int)

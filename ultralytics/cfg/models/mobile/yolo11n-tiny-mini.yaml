@@ -2,13 +2,13 @@
 # YOLO11 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
 
 # Parameters
-nc: 80 # 输出的类别数
+nc: 10 # 输出的类别数
 scales: # model compound scaling constants, i.e. 'model=yolo11n.yaml' will call yolo11.yaml with scale 'n'
   # [depth, width, max_channels]
   # depth 是网络的深度系数, 与下面定义的 repeats 相乘从而得到模型实际的层数
   # width 是网络的宽度, 即通道数, 与下面的定义的每层模型的通道数相乘, 得到模型实际的通道数
   # max_channels 是最大通道数, 是对 width 上限的限制
-  n: [0.50, 0.25, 1024] # summary: 319 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
+  n: [0.5, 0.25, 512] # summary: 319 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
   s: [0.50, 0.50, 1024] # summary: 319 layers, 9458752 parameters, 9458736 gradients, 21.7 GFLOPs
   m: [0.50, 1.00, 512] # summary: 409 layers, 20114688 parameters, 20114672 gradients, 68.5 GFLOPs
   l: [1.00, 1.00, 512] # summary: 631 layers, 25372160 parameters, 25372144 gradients, 87.6 GFLOPs
@@ -35,9 +35,9 @@ backbone:
   - [-1, 1, Conv, [256, 3, 2]] # 3-P3/8
   - [-1, 2, C3k2, [512, False, 0.25]]
   - [-1, 1, Conv, [512, 3, 2]] # 5-P4/16
-  - [-1, 2, C3k2, [512, True]]
+  - [-1, 2, C3k2, [512, True, 0.25]]
   - [-1, 1, Conv, [1024, 3, 2]] # 7-P5/32
-  - [-1, 2, C3k2, [1024, True]]
+  - [-1, 2, C3k2, [1024, True, 0.25]]
   # SPPF 的参数 [c2, k]
   # - c2 是输出通道数
   # - k 是 nn.MaxPool2d 的 kernel_size
@@ -57,19 +57,19 @@ head:
   # Concat 的参数 [dimension]
   # - dimension 表示在指定的维度进行拼接, 其实就是torch.cat(x, dim=dimension)
   - [[-1, 6], 1, Concat, [1]] # cat backbone P4
-  - [-1, 2, C3k2, [512, False]] # 13
+  - [-1, 2, C3k2, [512, False, 0.25]] # 13
 
   - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
   - [[-1, 4], 1, Concat, [1]] # cat backbone P3
-  - [-1, 2, C3k2, [256, False]] # 16 (P3/8-small)
+  - [-1, 2, C3k2, [256, False, 0.25]] # 16 (P3/8-small)
 
   - [-1, 1, Conv, [256, 3, 2]]
   - [[-1, 13], 1, Concat, [1]] # cat head P4
-  - [-1, 2, C3k2, [512, False]] # 19 (P4/16-medium)
+  - [-1, 2, C3k2, [512, False, 0.25]] # 19 (P4/16-medium)
 
   - [-1, 1, Conv, [512, 3, 2]]
   - [[-1, 10], 1, Concat, [1]] # cat head P5
-  - [-1, 2, C3k2, [1024, True]] # 22 (P5/32-large)
+  - [-1, 2, C3k2, [1024, True, 0.25]] # 22 (P5/32-large)
 
   # Detect 的参数 [nc]
   # - nc 表示目标的类别数量
