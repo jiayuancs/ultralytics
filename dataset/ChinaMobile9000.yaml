@@ -1,0 +1,24 @@
+# 经过 `8:1:1` 划分的数据集, 数据集共包含 9236 张图片:
+# - 其中约 3000 张是中国移动提供的, 包含了新的目标类别: 光功率仪器屏幕(optical);
+# - 其余约 6000 张图片由我们学生自己标注, 不包含光功率仪器屏幕(optical)这个目标类别
+# train/val/test: 8:1:1, 7388/923/925
+
+
+path: /workspace/dataset/ChinaMobile/image-9000
+train: images/train  # train images (relative to 'path')
+val: images/val  # val images (relative to 'path')
+test: images/test
+
+# Classes
+nc: 10
+names:
+  0: box
+  1: box painting
+  2: box label
+  3: POS
+  4: POS label
+  5: POS port
+  6: dust cap
+  7: tail fiber
+  8: tail fiber label
+  9: optical

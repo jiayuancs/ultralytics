@@ -1,0 +1,72 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# YOLO11 object detection model with P3-P5 outputs. For Usage examples see https://docs.ultralytics.com/tasks/detect
+
+## 修改
+# - nc: 80 --> 10
+# - scales:
+#     - n: [0.50, 0.25, 1024] --> [0.50, 0.25, 512]
+#
+#
+## 性能
+### 数据集: dataset/ChinaMobile9000.yaml
+### 参数: epochs=300 imgsz=640 batch=32
+#### 验证集性能:
+# Ultralytics 8.3.28 __ Python-3.10.14 torch-2.2.2+cu118 CUDA:0 (NVIDIA GeForce RTX 3090, 24260MiB)
+# YOLO11n-v0.0.1 summary (fused): 238 layers, 1,494,758 parameters, 0 gradients, 5.4 GFLOPs                                                                                                                                       Class     Images  Instances      Box(P          R      mAP50  mAP50-95): 100%|__________| 15/15 [00:09<00:00,  1.54it/s]
+#                    all        923      10683       0.94      0.933      0.947      0.791
+#                    box        218        220      0.995      0.986      0.991      0.968
+#           box painting        210        210      0.958      0.986      0.962      0.846
+#              box label        206        212      0.976      0.939       0.97      0.861
+#                    POS        472        485      0.965      0.956      0.973      0.901
+#              POS label        485        498      0.955      0.964       0.95      0.908
+#               POS port        478       4296      0.971      0.993      0.985      0.814
+#               dust cap        334       1938      0.899      0.822      0.899      0.514
+#             tail fiber        486       1989      0.919      0.928      0.941      0.586
+#       tail fiber label        299        539      0.766      0.759      0.805      0.542
+#                optical        295        296      0.999      0.997      0.995      0.966
+
+
+# Parameters
+nc: 10 # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolo11n.yaml' will call yolo11.yaml with scale 'n'
+  # [depth, width, max_channels]
+  n: [0.50, 0.25, 512] # summary: 319 layers, 2624080 parameters, 2624064 gradients, 6.6 GFLOPs
+  s: [0.50, 0.50, 1024] # summary: 319 layers, 9458752 parameters, 9458736 gradients, 21.7 GFLOPs
+  m: [0.50, 1.00, 512] # summary: 409 layers, 20114688 parameters, 20114672 gradients, 68.5 GFLOPs
+  l: [1.00, 1.00, 512] # summary: 631 layers, 25372160 parameters, 25372144 gradients, 87.6 GFLOPs
+  x: [1.00, 1.50, 512] # summary: 631 layers, 56966176 parameters, 56966160 gradients, 196.0 GFLOPs
+
+# YOLO11n backbone
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, Conv, [64, 3, 2]] # 0-P1/2
+  - [-1, 1, Conv, [128, 3, 2]] # 1-P2/4
+  - [-1, 2, C3k2, [256, False, 0.25]]
+  - [-1, 1, Conv, [256, 3, 2]] # 3-P3/8
+  - [-1, 2, C3k2, [512, False, 0.25]]
+  - [-1, 1, Conv, [512, 3, 2]] # 5-P4/16
+  - [-1, 2, C3k2, [512, True]]
+  - [-1, 1, Conv, [1024, 3, 2]] # 7-P5/32
+  - [-1, 2, C3k2, [1024, True]]
+  - [-1, 1, SPPF, [1024, 5]] # 9
+  - [-1, 2, C2PSA, [1024]] # 10
+
+# YOLO11n head
+head:
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 6], 1, Concat, [1]] # cat backbone P4
+  - [-1, 2, C3k2, [512, False]] # 13
+
+  - [-1, 1, nn.Upsample, [None, 2, "nearest"]]
+  - [[-1, 4], 1, Concat, [1]] # cat backbone P3
+  - [-1, 2, C3k2, [256, False]] # 16 (P3/8-small)
+
+  - [-1, 1, Conv, [256, 3, 2]]
+  - [[-1, 13], 1, Concat, [1]] # cat head P4
+  - [-1, 2, C3k2, [512, False]] # 19 (P4/16-medium)
+
+  - [-1, 1, Conv, [512, 3, 2]]
+  - [[-1, 10], 1, Concat, [1]] # cat head P5
+  - [-1, 2, C3k2, [1024, True]] # 22 (P5/32-large)
+
+  - [[16, 19, 22], 1, Detect, [nc]] # Detect(P3, P4, P5)
