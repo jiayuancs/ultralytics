@@ -47,7 +47,6 @@ yolo val \
 data=[DATASET.yaml] \
 model=runs/detect/[MODEL NAME]/weights/best.pt \
 split=test \
-epochs=300 \
 imgsz=640 \
 batch=32
 ```
