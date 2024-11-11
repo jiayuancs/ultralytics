@@ -11,8 +11,8 @@ from ultralytics import YOLO
 
 def get_opt():
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', default='dataset/ChinaMobile9000.yaml', type=str, help="数据集")
-    parser.add_argument('--cfg', default='cfg/yolo11n-v0.0.1.yaml', type=str, help="模型结构")
+    parser.add_argument('--data', default='dataset/ChinaMobile20241111.yaml', type=str, help="数据集")
+    parser.add_argument('--cfg', default='cfg/yolo11n-v0.1.0.yaml', type=str, help="模型结构")
     parser.add_argument('--epochs', default=300, type=int)
     parser.add_argument('--imgsz', default=640, type=int)
     parser.add_argument('--batch', default=32, type=int)

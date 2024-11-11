@@ -1,0 +1,23 @@
+# 2024年11月11日收到的中国移动修改后的标注数据（包含多排分光器端口）
+# - 其中训练集缺失 344 张图片
+# train/val/test: 8:1:1, (7587-344=7243)/948/949
+
+
+path: /workspace/dataset/ChinaMobile/dataset-20241111
+train: images/train  # train images (relative to 'path')
+val: images/val  # val images (relative to 'path')
+test: images/test
+
+# Classes
+# 注：下面的类别名称可能是错误的
+nc: 9
+names:
+  0: box
+  1: box painting
+  2: box label
+  3: POS
+  4: POS label
+  5: port1
+  6: port2
+  7: tail fiber label
+  8: optical
